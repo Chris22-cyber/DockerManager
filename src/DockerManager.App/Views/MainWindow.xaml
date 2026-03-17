@@ -9,6 +9,7 @@
         Foreground="{DynamicResource OnSurface}"
         FontFamily="Segoe UI"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         Icon="/Resources/logo.ico">
 
     <Window.Resources>

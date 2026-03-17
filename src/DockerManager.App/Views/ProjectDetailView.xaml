@@ -36,7 +36,7 @@
                             Style="{StaticResource DangerButton}" Margin="3,3"/>
                     <Button Content="Push Selezionate" Command="{Binding PushSelectedCommand}"
                             Style="{StaticResource SecondaryButton}" Margin="3,3"/>
-                    <Button Content="Deploy" Command="{Binding DeployCommand}"
+                    <Button Content="Deploy All" Command="{Binding DeployCommand}"
                             Margin="3,3"
                             Visibility="{Binding HasDeployment, Converter={StaticResource BoolToVis}}"
                             Background="#107C10" Foreground="White" FontFamily="Segoe UI Semibold"
@@ -86,8 +86,9 @@
             </Border>
 
             <!-- Project info -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel>
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel MaxWidth="1200" HorizontalAlignment="Stretch">
                     <DockPanel Margin="0,0,0,12">
                         <Button Content="Modifica" Command="{Binding EditProjectCommand}"
                                 Style="{StaticResource TertiaryButton}"
