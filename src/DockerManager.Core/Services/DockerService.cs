@@ -241,6 +241,44 @@ public class DockerService : IDockerService
         }
     }
 
+    public Task<bool> StartDockerDesktopAsync()
+    {
+        var paths = new[]
+        {
+            @"C:\Program Files\Docker\Docker\Docker Desktop.exe",
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Docker", "Docker", "Docker Desktop.exe"),
+            @"C:\Program Files (x86)\Docker\Docker\Docker Desktop.exe",
+        };
+
+        foreach (var path in paths)
+        {
+            if (File.Exists(path))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = path,
+                    UseShellExecute = true
+                });
+                return Task.FromResult(true);
+            }
+        }
+
+        // Fallback: try via shell (works if Docker Desktop is in PATH)
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "Docker Desktop",
+                UseShellExecute = true
+            });
+            return Task.FromResult(true);
+        }
+        catch
+        {
+            return Task.FromResult(false);
+        }
+    }
+
     private async Task<DockerOperationResult> RunDockerCommandAsync(
         string arguments,
         string? workingDirectory,

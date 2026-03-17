@@ -48,7 +48,25 @@
 
         <!-- Status Bar -->
         <Border DockPanel.Dock="Bottom" Background="{DynamicResource PrimaryGradient}" Padding="12,5">
-            <TextBlock Text="{Binding StatusBarText}" Foreground="White" FontSize="12"/>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                            Visibility="{Binding IsDockerAvailable, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                    <Button Content="Avvia Docker" Command="{Binding StartDockerCommand}"
+                            Foreground="White" Background="Transparent" BorderBrush="White"
+                            BorderThickness="1" Padding="8,2" Margin="4,0" FontSize="11"
+                            Cursor="Hand"
+                            Visibility="{Binding IsStartingDocker, Converter={StaticResource BoolToVis}, ConverterParameter=invert}"/>
+                    <TextBlock Text="Avvio in corso..." Foreground="White" FontSize="11"
+                               VerticalAlignment="Center" Margin="4,0"
+                               Visibility="{Binding IsStartingDocker, Converter={StaticResource BoolToVis}}"/>
+                    <Button Content="Ricontrolla" Command="{Binding RefreshDockerStatusCommand}"
+                            Foreground="White" Background="Transparent" BorderBrush="White"
+                            BorderThickness="1" Padding="8,2" Margin="4,0" FontSize="11"
+                            Cursor="Hand"/>
+                </StackPanel>
+                <TextBlock Text="{Binding StatusBarText}" Foreground="White" FontSize="12"
+                           VerticalAlignment="Center"/>
+            </DockPanel>
         </Border>
 
         <!-- Main Content -->

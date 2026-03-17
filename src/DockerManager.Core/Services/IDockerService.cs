@@ -36,4 +36,6 @@ public interface IDockerService
         CancellationToken cancellationToken = default);
 
     Task<bool> IsDockerAvailableAsync();
+
+    Task<bool> StartDockerDesktopAsync();
 }
