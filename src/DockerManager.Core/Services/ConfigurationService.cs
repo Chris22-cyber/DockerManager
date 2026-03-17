@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -6,6 +7,7 @@ using DockerManager.Core.Models;
 
 namespace DockerManager.Core.Services;
 
+[SupportedOSPlatform("windows")]
 public class ConfigurationService : IConfigurationService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()

@@ -1,4 +1,5 @@
 using DockerManager.Core.Infrastructure;
+using Xunit;
 using DockerManager.Core.Models;
 using DockerManager.Core.Services;
 using Moq;

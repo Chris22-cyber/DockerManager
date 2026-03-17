@@ -1,4 +1,5 @@
 using DockerManager.Core.Services;
+using Xunit;
 
 namespace DockerManager.Core.Tests;
 
