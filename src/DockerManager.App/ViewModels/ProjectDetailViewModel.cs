@@ -9,6 +9,8 @@ namespace DockerManager.App.ViewModels;
 public class ProjectDetailViewModel : ViewModelBase
 {
     private readonly IDockerService _dockerService;
+    private readonly IDeploymentService _deploymentService;
+    private readonly IConfigurationService _configurationService;
     private readonly LogOutputViewModel _logViewModel;
     private readonly Dispatcher _dispatcher;
     private ProjectConfig? _currentProject;
@@ -22,12 +24,16 @@ public class ProjectDetailViewModel : ViewModelBase
         {
             SetProperty(ref _currentProject, value);
             OnPropertyChanged(nameof(HasProject));
+            OnPropertyChanged(nameof(HasDeployment));
+            OnPropertyChanged(nameof(DeployServerInfo));
             RefreshImages();
             UpdateCommands();
         }
     }
 
     public bool HasProject => CurrentProject is not null;
+    public bool HasDeployment => CurrentProject?.Deployment is not null;
+    public string DeployServerInfo => CurrentProject?.Deployment is { } d ? $"{d.Host}:{d.Port}" : string.Empty;
 
     public bool IsOperationRunning
     {
@@ -45,6 +51,8 @@ public class ProjectDetailViewModel : ViewModelBase
     public AsyncRelayCommand BuildSelectedCommand { get; }
     public AsyncRelayCommand PushAllCommand { get; }
     public AsyncRelayCommand PushSelectedCommand { get; }
+    public AsyncRelayCommand DeployCommand { get; }
+    public AsyncRelayCommand BuildAndDeployCommand { get; }
     public RelayCommand CancelCommand { get; }
     public RelayCommand EditProjectCommand { get; }
 
@@ -52,9 +60,13 @@ public class ProjectDetailViewModel : ViewModelBase
 
     public ProjectDetailViewModel(
         IDockerService dockerService,
+        IDeploymentService deploymentService,
+        IConfigurationService configurationService,
         LogOutputViewModel logViewModel)
     {
         _dockerService = dockerService;
+        _deploymentService = deploymentService;
+        _configurationService = configurationService;
         _logViewModel = logViewModel;
         _dispatcher = Dispatcher.CurrentDispatcher;
 
@@ -62,6 +74,8 @@ public class ProjectDetailViewModel : ViewModelBase
         BuildSelectedCommand = new AsyncRelayCommand(BuildSelectedAsync, () => CanRunOperation() && HasSelectedImages());
         PushAllCommand = new AsyncRelayCommand(PushAllAsync, () => CanRunOperation());
         PushSelectedCommand = new AsyncRelayCommand(PushSelectedAsync, () => CanRunOperation() && HasSelectedImages());
+        DeployCommand = new AsyncRelayCommand(DeployAsync, () => CanRunOperation() && HasDeployment);
+        BuildAndDeployCommand = new AsyncRelayCommand(BuildAndDeployAsync, () => CanRunOperation() && HasDeployment);
         CancelCommand = new RelayCommand(Cancel, () => IsOperationRunning);
         EditProjectCommand = new RelayCommand(
             () => { if (CurrentProject is not null) RequestEditProject?.Invoke(CurrentProject); },
@@ -94,6 +108,8 @@ public class ProjectDetailViewModel : ViewModelBase
         BuildSelectedCommand.RaiseCanExecuteChanged();
         PushAllCommand.RaiseCanExecuteChanged();
         PushSelectedCommand.RaiseCanExecuteChanged();
+        DeployCommand.RaiseCanExecuteChanged();
+        BuildAndDeployCommand.RaiseCanExecuteChanged();
         CancelCommand.RaiseCanExecuteChanged();
         EditProjectCommand.RaiseCanExecuteChanged();
     }
@@ -208,6 +224,75 @@ public class ProjectDetailViewModel : ViewModelBase
         catch (OperationCanceledException)
         {
             Log(new LogEntry { Level = LogLevel.Warning, Message = "Push cancelled." });
+        }
+        finally
+        {
+            IsOperationRunning = false;
+            _cts = null;
+        }
+    }
+
+    private async Task DeployAsync()
+    {
+        if (CurrentProject?.Deployment is not { } deployment) return;
+
+        _cts = new CancellationTokenSource();
+        IsOperationRunning = true;
+
+        try
+        {
+            var password = _configurationService.DecryptPassword(deployment.EncryptedPassword);
+            await _deploymentService.DeployAsync(deployment, password, Log, _cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            Log(new LogEntry { Level = LogLevel.Warning, Message = "Deploy annullato." });
+        }
+        finally
+        {
+            IsOperationRunning = false;
+            _cts = null;
+        }
+    }
+
+    private async Task BuildAndDeployAsync()
+    {
+        if (CurrentProject is null) return;
+
+        _cts = new CancellationTokenSource();
+        IsOperationRunning = true;
+
+        try
+        {
+            // 1. Build All
+            Log(new LogEntry { Level = LogLevel.Info, Message = "=== Build All ===" });
+            var buildResults = await _dockerService.BuildAllAsync(CurrentProject, Log, _cts.Token);
+            if (buildResults.Any(r => !r.Success))
+            {
+                Log(new LogEntry { Level = LogLevel.Error, Message = "Build fallita. Deploy annullato." });
+                return;
+            }
+
+            // 2. Push All
+            Log(new LogEntry { Level = LogLevel.Info, Message = "=== Push All ===" });
+            var pushResults = await _dockerService.PushAllAsync(CurrentProject, Log, _cts.Token);
+            if (pushResults.Any(r => !r.Success))
+            {
+                Log(new LogEntry { Level = LogLevel.Error, Message = "Push fallita. Deploy annullato." });
+                return;
+            }
+
+            // 3. Deploy
+            if (CurrentProject.Deployment is { } deployment)
+            {
+                Log(new LogEntry { Level = LogLevel.Info, Message = "=== Deploy ===" });
+                var password = _configurationService.DecryptPassword(deployment.EncryptedPassword);
+                await _deploymentService.DeployAsync(deployment, password, Log, _cts.Token);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Log(new LogEntry { Level = LogLevel.Warning, Message = "Build & Deploy annullato." });
         }
         finally
         {

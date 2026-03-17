@@ -28,7 +28,7 @@
                      FontFamily="Cascadia Code, Consolas, Courier New"
                      FontSize="12"
                      Padding="8,4"
-                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      VirtualizingPanel.ScrollUnit="Pixel">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
@@ -41,7 +41,7 @@
                     <DataTemplate>
                         <TextBlock Text="{Binding}"
                                    Foreground="{Binding Level, Converter={StaticResource LogLevelBrush}}"
-                                   TextWrapping="NoWrap"/>
+                                   TextWrapping="Wrap"/>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>

@@ -8,4 +8,5 @@ public class ProjectConfig
     public string Description { get; set; } = string.Empty;
     public List<DockerImageConfig> Images { get; set; } = new();
     public Dictionary<string, string> BuildArgs { get; set; } = new();
+    public DeploymentConfig? Deployment { get; set; }
 }

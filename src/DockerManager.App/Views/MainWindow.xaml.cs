@@ -1,16 +1,26 @@
 using System.Windows;
 using DockerManager.App.ViewModels;
 using DockerManager.Core.Models;
+using DockerManager.Core.Services;
 using Microsoft.Win32;
 
 namespace DockerManager.App.Views;
 
 public partial class MainWindow : Window
 {
+    private readonly IConfigurationService _configurationService;
+    private readonly IDeploymentService _deploymentService;
+
     private MainWindowViewModel ViewModel => (MainWindowViewModel)DataContext;
 
-    public MainWindow(MainWindowViewModel viewModel)
+    public MainWindow(
+        MainWindowViewModel viewModel,
+        IConfigurationService configurationService,
+        IDeploymentService deploymentService)
     {
+        _configurationService = configurationService;
+        _deploymentService = deploymentService;
+
         DataContext = viewModel;
         InitializeComponent();
 
@@ -25,7 +35,7 @@ public partial class MainWindow : Window
 
     private void ShowAddProjectDialog()
     {
-        var dialog = new ProjectEditDialog { Owner = this };
+        var dialog = new ProjectEditDialog(_configurationService, _deploymentService) { Owner = this };
         if (dialog.ShowDialog() == true)
         {
             ViewModel.ProjectList.AddProject(dialog.ViewModel.ToProjectConfig());
@@ -34,8 +44,9 @@ public partial class MainWindow : Window
 
     private void ShowEditProjectDialog(ProjectConfig project)
     {
-        var dialog = new ProjectEditDialog { Owner = this };
+        var dialog = new ProjectEditDialog(_configurationService, _deploymentService) { Owner = this };
         dialog.ViewModel.LoadFrom(project);
+        dialog.InitializePassword();
         if (dialog.ShowDialog() == true)
         {
             ViewModel.ProjectList.UpdateProject(dialog.ViewModel.ToProjectConfig());
@@ -112,7 +123,7 @@ public partial class MainWindow : Window
 
     private void About_Click(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("Docker Manager v2.0.0\nGestore operazioni Docker per Windows\nSupporto multi-immagine per progetto",
+        MessageBox.Show("Docker Manager v2.1.0\nGestore operazioni Docker per Windows\nSupporto multi-immagine e deploy SSH",
             "Informazioni", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 }

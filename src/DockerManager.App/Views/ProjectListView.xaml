@@ -57,7 +57,8 @@
                 <DataTemplate>
                     <StackPanel>
                         <TextBlock Text="{Binding Name}" FontFamily="Segoe UI Semibold"
-                                   FontSize="13" Foreground="{DynamicResource OnSurface}"/>
+                                   FontSize="13" Foreground="{DynamicResource OnSurface}"
+                                   TextTrimming="CharacterEllipsis"/>
                         <TextBlock FontSize="11" Foreground="{DynamicResource OnSurfaceVariant}">
                             <Run Text="{Binding Images.Count, Mode=OneWay}"/>
                             <Run Text=" immagini"/>

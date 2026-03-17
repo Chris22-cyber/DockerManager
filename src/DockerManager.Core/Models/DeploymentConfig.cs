@@ -1,0 +1,11 @@
+namespace DockerManager.Core.Models;
+
+public class DeploymentConfig
+{
+    public string Host { get; set; } = string.Empty;
+    public int Port { get; set; } = 22;
+    public string Username { get; set; } = string.Empty;
+    public string EncryptedPassword { get; set; } = string.Empty;
+    public string WorkingDirectory { get; set; } = string.Empty;
+    public List<string> Commands { get; set; } = new();
+}

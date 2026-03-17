@@ -4,11 +4,12 @@
         xmlns:views="clr-namespace:DockerManager.App.Views"
         xmlns:converters="clr-namespace:DockerManager.App.Converters"
         Title="Docker Manager" Height="700" Width="1050"
-        MinHeight="500" MinWidth="800"
+        MinHeight="450" MinWidth="650"
         Background="{DynamicResource Surface}"
         Foreground="{DynamicResource OnSurface}"
         FontFamily="Segoe UI"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Icon="/Resources/logo.ico">
 
     <Window.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
@@ -60,9 +61,9 @@
             <!-- Top: Projects + Detail -->
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="240" MinWidth="180"/>
+                    <ColumnDefinition Width="240" MinWidth="150"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*" MinWidth="300"/>
+                    <ColumnDefinition Width="*" MinWidth="250"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Project List -->

@@ -1,6 +1,7 @@
 using System.Windows;
 using DockerManager.App.ViewModels;
 using DockerManager.Core.Models;
+using DockerManager.Core.Services;
 
 namespace DockerManager.App.Views;
 
@@ -8,13 +9,26 @@ public partial class ProjectEditDialog : Window
 {
     public ProjectEditDialogViewModel ViewModel => (ProjectEditDialogViewModel)DataContext;
 
-    public ProjectEditDialog()
+    public ProjectEditDialog(
+        IConfigurationService configurationService,
+        IDeploymentService deploymentService)
     {
         InitializeComponent();
-        DataContext = new ProjectEditDialogViewModel();
+        DataContext = new ProjectEditDialogViewModel(configurationService, deploymentService);
 
         ViewModel.RequestAddImage += ShowAddImageDialog;
         ViewModel.RequestEditImage += ShowEditImageDialog;
+
+        // Sync PasswordBox with ViewModel
+        DeployPasswordBox.PasswordChanged += (_, _) =>
+        {
+            ViewModel.DeployPassword = DeployPasswordBox.Password;
+        };
+    }
+
+    public void InitializePassword()
+    {
+        DeployPasswordBox.Password = ViewModel.DeployPassword;
     }
 
     private void ShowAddImageDialog()

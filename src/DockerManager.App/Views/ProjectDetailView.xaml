@@ -26,31 +26,76 @@
 
             <!-- Action buttons -->
             <Border DockPanel.Dock="Bottom" Background="{DynamicResource SurfaceContainerLow}"
-                    CornerRadius="12" Padding="16,10" Margin="0,16,0,0">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    CornerRadius="12" Padding="10,8" Margin="0,16,0,0">
+                <WrapPanel HorizontalAlignment="Center">
                     <Button Content="Build All" Command="{Binding BuildAllCommand}"
-                            Style="{StaticResource PrimaryButton}" Margin="4,0" MinWidth="110"/>
+                            Style="{StaticResource PrimaryButton}" Margin="3,3"/>
                     <Button Content="Build Selezionate" Command="{Binding BuildSelectedCommand}"
-                            Style="{StaticResource SecondaryButton}" Margin="4,0" MinWidth="130"/>
+                            Style="{StaticResource SecondaryButton}" Margin="3,3"/>
                     <Button Content="Push All" Command="{Binding PushAllCommand}"
-                            Style="{StaticResource DangerButton}" Margin="4,0" MinWidth="110"/>
+                            Style="{StaticResource DangerButton}" Margin="3,3"/>
                     <Button Content="Push Selezionate" Command="{Binding PushSelectedCommand}"
-                            Style="{StaticResource SecondaryButton}" Margin="4,0" MinWidth="130"/>
+                            Style="{StaticResource SecondaryButton}" Margin="3,3"/>
+                    <Button Content="Deploy" Command="{Binding DeployCommand}"
+                            Margin="3,3"
+                            Visibility="{Binding HasDeployment, Converter={StaticResource BoolToVis}}"
+                            Background="#107C10" Foreground="White" FontFamily="Segoe UI Semibold"
+                            Padding="16,8" BorderThickness="0" Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Opacity" Value="0.9"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button Content="Build &amp; Deploy" Command="{Binding BuildAndDeployCommand}"
+                            Margin="3,3"
+                            Visibility="{Binding HasDeployment, Converter={StaticResource BoolToVis}}"
+                            Background="#107C10" Foreground="White" FontFamily="Segoe UI Semibold"
+                            Padding="16,8" BorderThickness="0" Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Opacity" Value="0.9"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
                     <Button Content="Annulla" Command="{Binding CancelCommand}"
-                            Style="{StaticResource TertiaryButton}" Margin="4,0" MinWidth="80"/>
-                </StackPanel>
+                            Style="{StaticResource TertiaryButton}" Margin="3,3"/>
+                </WrapPanel>
             </Border>
 
             <!-- Project info -->
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                     <DockPanel Margin="0,0,0,12">
-                        <TextBlock Text="{Binding CurrentProject.Name}" FontSize="22"
-                                   FontFamily="Segoe UI Semibold"
-                                   Foreground="{DynamicResource OnSurface}" VerticalAlignment="Center"/>
                         <Button Content="Modifica" Command="{Binding EditProjectCommand}"
                                 Style="{StaticResource TertiaryButton}"
-                                HorizontalAlignment="Right"/>
+                                DockPanel.Dock="Right" Margin="8,0,0,0"/>
+                        <TextBlock Text="{Binding CurrentProject.Name}" FontSize="22"
+                                   FontFamily="Segoe UI Semibold"
+                                   Foreground="{DynamicResource OnSurface}" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"/>
                     </DockPanel>
 
                     <!-- Info card -->
@@ -64,6 +109,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Root Directory"
@@ -75,7 +121,15 @@
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Descrizione"
                                        Foreground="{DynamicResource OnSurfaceVariant}" Margin="0,4"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentProject.Description}"
-                                       Foreground="{DynamicResource OnSurface}" Margin="0,4"/>
+                                       Foreground="{DynamicResource OnSurface}" Margin="0,4"
+                                       TextWrapping="Wrap"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Server"
+                                       Foreground="{DynamicResource OnSurfaceVariant}" Margin="0,4"
+                                       Visibility="{Binding HasDeployment, Converter={StaticResource BoolToVis}}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DeployServerInfo}"
+                                       Foreground="{DynamicResource OnSurface}" Margin="0,4"
+                                       Visibility="{Binding HasDeployment, Converter={StaticResource BoolToVis}}"/>
                         </Grid>
                     </Border>
 
@@ -95,13 +149,12 @@
                                             <TextBlock Text="{Binding Image.Name}"
                                                        Foreground="{DynamicResource OnSurface}"
                                                        FontFamily="Segoe UI Semibold" FontSize="13"/>
-                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                                <TextBlock Text="{Binding Image.ImageName}"
-                                                           Foreground="{DynamicResource OnSurfaceVariant}" FontSize="11"/>
-                                                <TextBlock Text=" | " Foreground="{DynamicResource OutlineVariant}" FontSize="11"/>
-                                                <TextBlock Text="{Binding Image.DockerfilePath}"
-                                                           Foreground="{DynamicResource OnSurfaceVariant}" FontSize="11"/>
-                                            </StackPanel>
+                                            <TextBlock Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
+                                                       Foreground="{DynamicResource OnSurfaceVariant}" FontSize="11">
+                                                <Run Text="{Binding Image.ImageName, Mode=OneWay}"/>
+                                                <Run Text=" | " Foreground="{DynamicResource OutlineVariant}"/>
+                                                <Run Text="{Binding Image.DockerfilePath, Mode=OneWay}"/>
+                                            </TextBlock>
                                             <ItemsControl ItemsSource="{Binding Image.Tags}" Margin="0,4,0,0">
                                                 <ItemsControl.ItemsPanel>
                                                     <ItemsPanelTemplate>
