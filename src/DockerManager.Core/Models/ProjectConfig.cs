@@ -9,4 +9,5 @@ public class ProjectConfig
     public List<DockerImageConfig> Images { get; set; } = new();
     public Dictionary<string, string> BuildArgs { get; set; } = new();
     public DeploymentConfig? Deployment { get; set; }
+    public string? ServerProfileName { get; set; }
 }

@@ -1,0 +1,159 @@
+<Window x:Class="DockerManager.App.Views.ServerProfileEditDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Profilo Server" Height="680" Width="540"
+        MinHeight="500" MinWidth="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        Background="{DynamicResource Surface}"
+        Foreground="{DynamicResource OnSurface}"
+        FontFamily="Segoe UI">
+
+    <DockPanel Margin="24">
+        <!-- Buttons -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Annulla" Click="Cancel_Click"
+                    Style="{StaticResource TertiaryButton}" Margin="4,0"/>
+            <Button Content="Salva" Click="Save_Click"
+                    Style="{StaticResource PrimaryButton}" Margin="4,0"/>
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Profile Name -->
+                <TextBlock Text="Nome Profilo" Foreground="{DynamicResource OnSurfaceVariant}"
+                           FontSize="12" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource AppTextBox}" Margin="0,0,0,16"/>
+
+                <!-- SSH Connection -->
+                <TextBlock Text="Connessione SSH" FontSize="15" FontFamily="Segoe UI Semibold"
+                           Foreground="{DynamicResource OnSurface}" Margin="0,0,0,10"/>
+
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="100"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Host"
+                               Foreground="{DynamicResource OnSurfaceVariant}" FontSize="12" Margin="0,0,8,4"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Porta"
+                               Foreground="{DynamicResource OnSurfaceVariant}" FontSize="12" Margin="0,0,0,4"/>
+
+                    <TextBox Grid.Row="1" Grid.Column="0"
+                             Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource AppTextBox}" Margin="0,0,8,8"/>
+                    <TextBox Grid.Row="1" Grid.Column="1"
+                             Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource AppTextBox}" Margin="0,0,0,8"/>
+                </Grid>
+
+                <TextBlock Text="Username" Foreground="{DynamicResource OnSurfaceVariant}"
+                           FontSize="12" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource AppTextBox}" Margin="0,0,0,8"/>
+
+                <TextBlock Text="Password" Foreground="{DynamicResource OnSurfaceVariant}"
+                           FontSize="12" Margin="0,0,0,4"/>
+                <PasswordBox x:Name="SshPasswordBox"
+                             Margin="0,0,0,8" Padding="8,8"
+                             Background="{DynamicResource SurfaceContainerHigh}"
+                             Foreground="{DynamicResource OnSurface}"
+                             BorderBrush="{DynamicResource Outline}" BorderThickness="1"/>
+
+                <TextBlock Text="Working Directory" Foreground="{DynamicResource OnSurfaceVariant}"
+                           FontSize="12" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource AppTextBox}" Margin="0,0,0,8"/>
+
+                <CheckBox Content="Usa sudo" IsChecked="{Binding UseSudo}"
+                          Foreground="{DynamicResource OnSurface}" Margin="0,0,0,8"/>
+
+                <!-- Test Connection -->
+                <DockPanel Margin="0,0,0,12">
+                    <Button Content="Test Connessione" Command="{Binding TestConnectionCommand}"
+                            Style="{StaticResource SecondaryButton}" Padding="14,6"
+                            DockPanel.Dock="Left"/>
+                    <TextBlock Text="{Binding TestConnectionStatus}" VerticalAlignment="Center"
+                               Foreground="{DynamicResource OnSurfaceVariant}" Margin="12,0,0,0"/>
+                </DockPanel>
+
+                <!-- Registry (optional) -->
+                <Separator Margin="0,4,0,12" Background="{DynamicResource OutlineVariant}"/>
+
+                <TextBlock Text="Registry (opzionale)" FontSize="15" FontFamily="Segoe UI Semibold"
+                           Foreground="{DynamicResource OnSurface}" Margin="0,0,0,10"/>
+
+                <TextBlock Text="URL Registry" Foreground="{DynamicResource OnSurfaceVariant}"
+                           FontSize="12" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding RegistryUrl, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource AppTextBox}" Margin="0,0,0,8"/>
+
+                <TextBlock Text="Username Registry" Foreground="{DynamicResource OnSurfaceVariant}"
+                           FontSize="12" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding RegistryUsername, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource AppTextBox}" Margin="0,0,0,8"/>
+
+                <TextBlock Text="Password Registry" Foreground="{DynamicResource OnSurfaceVariant}"
+                           FontSize="12" Margin="0,0,0,4"/>
+                <PasswordBox x:Name="RegistryPasswordBox"
+                             Margin="0,0,0,12" Padding="8,8"
+                             Background="{DynamicResource SurfaceContainerHigh}"
+                             Foreground="{DynamicResource OnSurface}"
+                             BorderBrush="{DynamicResource Outline}" BorderThickness="1"/>
+
+                <!-- Custom Variables -->
+                <Separator Margin="0,4,0,12" Background="{DynamicResource OutlineVariant}"/>
+
+                <TextBlock Text="Variabili Personalizzate" FontSize="15" FontFamily="Segoe UI Semibold"
+                           Foreground="{DynamicResource OnSurface}" Margin="0,0,0,6"/>
+                <TextBlock Text="Usa ${NOME} nei comandi deploy per sostituire il valore"
+                           Foreground="{DynamicResource OnSurfaceVariant}" FontSize="11" Margin="0,0,0,8"/>
+
+                <ItemsControl ItemsSource="{Binding CustomVariables}" Margin="0,0,0,4">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{DynamicResource SurfaceLowest}" CornerRadius="6"
+                                    Padding="10,6" Margin="0,2">
+                                <DockPanel>
+                                    <Button Content="X" DockPanel.Dock="Right"
+                                            Command="{Binding DataContext.RemoveVariableCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource DangerButton}" Padding="6,2"
+                                            FontSize="10" MinWidth="24"/>
+                                    <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource OnSurface}" FontFamily="Consolas" FontSize="12">
+                                        <Run Text="{Binding Key, Mode=OneWay}" FontWeight="SemiBold"/>
+                                        <Run Text=" = " Foreground="{DynamicResource OutlineVariant}"/>
+                                        <Run Text="{Binding Value, Mode=OneWay}"/>
+                                    </TextBlock>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0" Text="{Binding NewVariableKey, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource AppTextBox}" Margin="0,0,4,0"/>
+                    <TextBox Grid.Column="1" Text="{Binding NewVariableValue, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource AppTextBox}" Margin="4,0,4,0"/>
+                    <Button Grid.Column="2" Content="+ Aggiungi"
+                            Command="{Binding AddVariableCommand}"
+                            Style="{StaticResource SecondaryButton}" Padding="14,6"/>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

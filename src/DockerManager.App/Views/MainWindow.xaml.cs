@@ -36,6 +36,7 @@ public partial class MainWindow : Window
     private void ShowAddProjectDialog()
     {
         var dialog = new ProjectEditDialog(_configurationService, _deploymentService) { Owner = this };
+        dialog.ViewModel.LoadProfiles();
         if (dialog.ShowDialog() == true)
         {
             ViewModel.ProjectList.AddProject(dialog.ViewModel.ToProjectConfig());

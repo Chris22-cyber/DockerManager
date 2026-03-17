@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using DockerManager.Core.Infrastructure;
 using DockerManager.Core.Models;
 using DockerManager.Core.Services;
@@ -14,6 +15,7 @@ public class SettingsViewModel : ViewModelBase
     private string _password = string.Empty;
     private bool _isDockerAvailable;
     private string _statusMessage = string.Empty;
+    private ServerProfile? _selectedProfile;
 
     public string DockerCliPath
     {
@@ -51,9 +53,23 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _statusMessage, value);
     }
 
+    public ObservableCollection<ServerProfile> ServerProfiles { get; } = new();
+
+    public ServerProfile? SelectedProfile
+    {
+        get => _selectedProfile;
+        set => SetProperty(ref _selectedProfile, value);
+    }
+
     public AsyncRelayCommand SaveCommand { get; }
     public AsyncRelayCommand TestDockerCommand { get; }
     public AsyncRelayCommand TestLoginCommand { get; }
+    public RelayCommand AddProfileCommand { get; }
+    public RelayCommand EditProfileCommand { get; }
+    public RelayCommand RemoveProfileCommand { get; }
+
+    public event Action? RequestAddProfile;
+    public event Action<ServerProfile>? RequestEditProfile;
 
     public SettingsViewModel(IConfigurationService configService, IDockerService dockerService)
     {
@@ -63,6 +79,18 @@ public class SettingsViewModel : ViewModelBase
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         TestDockerCommand = new AsyncRelayCommand(TestDockerAsync);
         TestLoginCommand = new AsyncRelayCommand(TestLoginAsync);
+
+        AddProfileCommand = new RelayCommand(() => RequestAddProfile?.Invoke());
+        EditProfileCommand = new RelayCommand(param =>
+        {
+            if (param is ServerProfile profile)
+                RequestEditProfile?.Invoke(profile);
+        });
+        RemoveProfileCommand = new RelayCommand(param =>
+        {
+            if (param is ServerProfile profile)
+                RemoveProfile(profile);
+        });
     }
 
     public void Load()
@@ -74,6 +102,22 @@ public class SettingsViewModel : ViewModelBase
         Password = string.IsNullOrEmpty(config.DefaultRegistry.EncryptedPassword)
             ? string.Empty
             : _configService.DecryptPassword(config.DefaultRegistry.EncryptedPassword);
+
+        RefreshProfiles();
+    }
+
+    public void RefreshProfiles()
+    {
+        ServerProfiles.Clear();
+        foreach (var profile in _configService.GetAllProfiles())
+            ServerProfiles.Add(profile);
+    }
+
+    private async void RemoveProfile(ServerProfile profile)
+    {
+        _configService.RemoveProfile(profile.Id);
+        await _configService.SaveAsync();
+        RefreshProfiles();
     }
 
     private async Task SaveAsync()

@@ -15,4 +15,12 @@ public interface IConfigurationService
     Task ExportProjectAsync(string projectId, string filePath);
     Task ImportProjectAsync(string filePath);
     Task ExportAllProjectsAsync(string filePath);
+
+    // Server Profiles
+    List<ServerProfile> GetAllProfiles();
+    ServerProfile? GetProfileByName(string name);
+    void AddProfile(ServerProfile profile);
+    void UpdateProfile(ServerProfile profile);
+    void RemoveProfile(string profileId);
+    ServerProfile? ResolveProfile(ProjectConfig project);
 }

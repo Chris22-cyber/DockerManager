@@ -87,58 +87,72 @@
                 <TextBlock Text="Deployment SSH" FontSize="15" FontFamily="Segoe UI Semibold"
                            Foreground="{DynamicResource OnSurface}" Margin="0,0,0,10"/>
 
-                <Grid Margin="0,0,0,8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="100"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                <!-- Profile selector -->
+                <TextBlock Text="Profilo Server" Foreground="{DynamicResource OnSurfaceVariant}"
+                           FontSize="12" Margin="0,0,0,4"/>
+                <ComboBox ItemsSource="{Binding AvailableProfiles}"
+                          SelectedItem="{Binding SelectedProfile}"
+                          DisplayMemberPath="Name"
+                          Margin="0,0,0,4"
+                          Background="{DynamicResource SurfaceContainerHigh}"
+                          Foreground="{DynamicResource OnSurface}"/>
+                <TextBlock Text="Seleziona un profilo oppure configura manualmente qui sotto"
+                           Foreground="{DynamicResource OnSurfaceVariant}" FontSize="11" Margin="0,0,0,10"/>
 
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Host"
-                               Foreground="{DynamicResource OnSurfaceVariant}" FontSize="12" Margin="0,0,8,4"/>
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Porta"
-                               Foreground="{DynamicResource OnSurfaceVariant}" FontSize="12" Margin="0,0,0,4"/>
+                <StackPanel IsEnabled="{Binding IsManualConfig}">
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                    <TextBox Grid.Row="1" Grid.Column="0"
-                             Text="{Binding DeployHost, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource AppTextBox}" Margin="0,0,8,8"/>
-                    <TextBox Grid.Row="1" Grid.Column="1"
-                             Text="{Binding DeployPort, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Host"
+                                   Foreground="{DynamicResource OnSurfaceVariant}" FontSize="12" Margin="0,0,8,4"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Porta"
+                                   Foreground="{DynamicResource OnSurfaceVariant}" FontSize="12" Margin="0,0,0,4"/>
+
+                        <TextBox Grid.Row="1" Grid.Column="0"
+                                 Text="{Binding DeployHost, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource AppTextBox}" Margin="0,0,8,8"/>
+                        <TextBox Grid.Row="1" Grid.Column="1"
+                                 Text="{Binding DeployPort, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource AppTextBox}" Margin="0,0,0,8"/>
+                    </Grid>
+
+                    <TextBlock Text="Username" Foreground="{DynamicResource OnSurfaceVariant}"
+                               FontSize="12" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding DeployUsername, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource AppTextBox}" Margin="0,0,0,8"/>
-                </Grid>
 
-                <TextBlock Text="Username" Foreground="{DynamicResource OnSurfaceVariant}"
-                           FontSize="12" Margin="0,0,0,4"/>
-                <TextBox Text="{Binding DeployUsername, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource AppTextBox}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Password" Foreground="{DynamicResource OnSurfaceVariant}"
+                               FontSize="12" Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="DeployPasswordBox"
+                                 Margin="0,0,0,8" Padding="8,8"
+                                 Background="{DynamicResource SurfaceContainerHigh}"
+                                 Foreground="{DynamicResource OnSurface}"
+                                 BorderBrush="{DynamicResource Outline}" BorderThickness="1"/>
 
-                <TextBlock Text="Password" Foreground="{DynamicResource OnSurfaceVariant}"
-                           FontSize="12" Margin="0,0,0,4"/>
-                <PasswordBox x:Name="DeployPasswordBox"
-                             Margin="0,0,0,8" Padding="8,8"
-                             Background="{DynamicResource SurfaceContainerHigh}"
-                             Foreground="{DynamicResource OnSurface}"
-                             BorderBrush="{DynamicResource Outline}" BorderThickness="1"/>
+                    <TextBlock Text="Working Directory" Foreground="{DynamicResource OnSurfaceVariant}"
+                               FontSize="12" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding DeployWorkingDirectory, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource AppTextBox}" Margin="0,0,0,8"/>
 
-                <TextBlock Text="Working Directory" Foreground="{DynamicResource OnSurfaceVariant}"
-                           FontSize="12" Margin="0,0,0,4"/>
-                <TextBox Text="{Binding DeployWorkingDirectory, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource AppTextBox}" Margin="0,0,0,8"/>
+                    <CheckBox Content="Usa sudo" IsChecked="{Binding DeployUseSudo}"
+                              Foreground="{DynamicResource OnSurface}" Margin="0,0,0,12"/>
 
-                <CheckBox Content="Usa sudo" IsChecked="{Binding DeployUseSudo}"
-                          Foreground="{DynamicResource OnSurface}" Margin="0,0,0,12"/>
-
-                <!-- Test Connection -->
-                <DockPanel Margin="0,0,0,8">
-                    <Button Content="Test Connessione" Command="{Binding TestConnectionCommand}"
-                            Style="{StaticResource SecondaryButton}" Padding="14,6"
-                            DockPanel.Dock="Left"/>
-                    <TextBlock Text="{Binding TestConnectionStatus}" VerticalAlignment="Center"
-                               Foreground="{DynamicResource OnSurfaceVariant}" Margin="12,0,0,0"/>
-                </DockPanel>
+                    <!-- Test Connection -->
+                    <DockPanel Margin="0,0,0,8">
+                        <Button Content="Test Connessione" Command="{Binding TestConnectionCommand}"
+                                Style="{StaticResource SecondaryButton}" Padding="14,6"
+                                DockPanel.Dock="Left"/>
+                        <TextBlock Text="{Binding TestConnectionStatus}" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource OnSurfaceVariant}" Margin="12,0,0,0"/>
+                    </DockPanel>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

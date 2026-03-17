@@ -58,7 +58,53 @@
 
             <!-- Status -->
             <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource Primary}"
-                       Margin="0,4,0,0"/>
+                       Margin="0,4,0,20"/>
+
+            <!-- Server Profiles -->
+            <TextBlock Text="Profili Server" FontSize="15" FontFamily="Segoe UI Semibold"
+                       Foreground="{DynamicResource OnSurface}" Margin="0,0,0,12"/>
+
+            <Border Background="{DynamicResource SurfaceLowest}" CornerRadius="10"
+                    Padding="20,16" Margin="0,0,0,12">
+                <StackPanel>
+                    <Button Content="+ Aggiungi Profilo" Command="{Binding AddProfileCommand}"
+                            Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left"
+                            Padding="14,6" Margin="0,0,0,12"/>
+
+                    <ItemsControl ItemsSource="{Binding ServerProfiles}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource SurfaceContainerLow}" CornerRadius="8"
+                                        Padding="14,10" Margin="0,3">
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Content="Modifica" Margin="4,0"
+                                                    Command="{Binding DataContext.EditProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource TertiaryButton}" Padding="8,4"/>
+                                            <Button Content="Rimuovi"
+                                                    Command="{Binding DataContext.RemoveProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource DangerButton}" Padding="8,4"/>
+                                        </StackPanel>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontFamily="Segoe UI Semibold"
+                                                       Foreground="{DynamicResource OnSurface}"/>
+                                            <TextBlock Foreground="{DynamicResource OnSurfaceVariant}" FontSize="11">
+                                                <Run Text="{Binding Host, Mode=OneWay}"/>
+                                                <Run Text=":" Foreground="{DynamicResource OutlineVariant}"/>
+                                                <Run Text="{Binding Port, Mode=OneWay}"/>
+                                                <Run Text=" | "/>
+                                                <Run Text="{Binding Username, Mode=OneWay}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

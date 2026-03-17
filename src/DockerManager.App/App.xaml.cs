@@ -10,6 +10,7 @@ namespace DockerManager.App;
 public partial class App : Application
 {
     private ServiceProvider? _serviceProvider;
+    public IServiceProvider Services => _serviceProvider!;
 
     protected override void OnStartup(StartupEventArgs e)
     {

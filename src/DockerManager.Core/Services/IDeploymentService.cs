@@ -11,6 +11,14 @@ public interface IDeploymentService
         Action<LogEntry>? onLog = null,
         CancellationToken cancellationToken = default);
 
+    Task<DockerOperationResult> DeployAsync(
+        DeploymentConfig config,
+        string decryptedPassword,
+        List<string> commands,
+        Dictionary<string, string>? variables,
+        Action<LogEntry>? onLog = null,
+        CancellationToken cancellationToken = default);
+
     Task<bool> TestConnectionAsync(
         DeploymentConfig config,
         string decryptedPassword);

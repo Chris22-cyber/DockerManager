@@ -24,6 +24,10 @@ public class ProjectEditDialogViewModel : ViewModelBase
     private bool _isTestingConnection;
     private bool _deployUseSudo;
 
+    // Server Profile
+    private ServerProfile? _selectedProfile;
+    private bool _isUsingProfile;
+
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public bool IsNew { get; set; } = true;
 
@@ -47,6 +51,42 @@ public class ProjectEditDialogViewModel : ViewModelBase
 
     public ObservableCollection<DockerImageConfig> Images { get; } = new();
     public Dictionary<string, string> BuildArgs { get; set; } = new();
+    public ObservableCollection<ServerProfile> AvailableProfiles { get; } = new();
+
+    public ServerProfile? SelectedProfile
+    {
+        get => _selectedProfile;
+        set
+        {
+            if (SetProperty(ref _selectedProfile, value))
+            {
+                IsUsingProfile = value is not null;
+                if (value is not null)
+                {
+                    DeployHost = value.Host;
+                    DeployPort = value.Port;
+                    DeployUsername = value.Username;
+                    DeployWorkingDirectory = value.WorkingDirectory;
+                    DeployUseSudo = value.UseSudo;
+                    DeployPassword = _configService is not null && !string.IsNullOrEmpty(value.EncryptedPassword)
+                        ? _configService.DecryptPassword(value.EncryptedPassword)
+                        : string.Empty;
+                }
+            }
+        }
+    }
+
+    public bool IsUsingProfile
+    {
+        get => _isUsingProfile;
+        set
+        {
+            if (SetProperty(ref _isUsingProfile, value))
+                OnPropertyChanged(nameof(IsManualConfig));
+        }
+    }
+
+    public bool IsManualConfig => !IsUsingProfile;
 
     // Deployment SSH properties
     public string DeployHost
@@ -173,6 +213,14 @@ public class ProjectEditDialogViewModel : ViewModelBase
         }
     }
 
+    public void LoadProfiles()
+    {
+        AvailableProfiles.Clear();
+        if (_configService is null) return;
+        foreach (var profile in _configService.GetAllProfiles())
+            AvailableProfiles.Add(profile);
+    }
+
     public void LoadFrom(ProjectConfig project)
     {
         Id = project.Id;
@@ -186,8 +234,15 @@ public class ProjectEditDialogViewModel : ViewModelBase
         foreach (var image in project.Images)
             Images.Add(image);
 
-        // Load deployment config
-        if (project.Deployment is { } deployment)
+        LoadProfiles();
+
+        // Load profile or legacy deployment config
+        if (!string.IsNullOrEmpty(project.ServerProfileName))
+        {
+            SelectedProfile = AvailableProfiles
+                .FirstOrDefault(p => string.Equals(p.Name, project.ServerProfileName, StringComparison.OrdinalIgnoreCase));
+        }
+        else if (project.Deployment is { } deployment)
         {
             DeployHost = deployment.Host;
             DeployPort = deployment.Port;
@@ -212,9 +267,14 @@ public class ProjectEditDialogViewModel : ViewModelBase
             BuildArgs = new Dictionary<string, string>(BuildArgs)
         };
 
-        // Save deployment config if host is specified
-        if (!string.IsNullOrWhiteSpace(DeployHost))
+        if (IsUsingProfile && SelectedProfile is not null)
         {
+            config.ServerProfileName = SelectedProfile.Name;
+            config.Deployment = null;
+        }
+        else if (!string.IsNullOrWhiteSpace(DeployHost))
+        {
+            config.ServerProfileName = null;
             config.Deployment = new DeploymentConfig
             {
                 Host = DeployHost,

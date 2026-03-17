@@ -7,10 +7,21 @@ namespace DockerManager.Core.Services;
 
 public class DeploymentService : IDeploymentService
 {
+    public Task<DockerOperationResult> DeployAsync(
+        DeploymentConfig config,
+        string decryptedPassword,
+        List<string> commands,
+        Action<LogEntry>? onLog = null,
+        CancellationToken cancellationToken = default)
+    {
+        return DeployAsync(config, decryptedPassword, commands, null, onLog, cancellationToken);
+    }
+
     public async Task<DockerOperationResult> DeployAsync(
         DeploymentConfig config,
         string decryptedPassword,
         List<string> commands,
+        Dictionary<string, string>? variables,
         Action<LogEntry>? onLog = null,
         CancellationToken cancellationToken = default)
     {
@@ -38,9 +49,11 @@ public class DeploymentService : IDeploymentService
                 Message = "Connessione SSH stabilita."
             });
 
-            foreach (var command in commands)
+            foreach (var rawCommand in commands)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                var command = SubstituteVariables(rawCommand, variables);
 
                 onLog?.Invoke(new LogEntry
                 {
@@ -185,6 +198,17 @@ public class DeploymentService : IDeploymentService
         {
             return false;
         }
+    }
+
+    private static string SubstituteVariables(string command, Dictionary<string, string>? variables)
+    {
+        if (variables is null || variables.Count == 0)
+            return command;
+
+        foreach (var (key, value) in variables)
+            command = command.Replace($"${{{key}}}", value);
+
+        return command;
     }
 
     private static SshClient CreateClient(DeploymentConfig config, string decryptedPassword)

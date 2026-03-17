@@ -32,9 +32,19 @@ public class ProjectDetailViewModel : ViewModelBase
     }
 
     public bool HasProject => CurrentProject is not null;
-    public bool HasDeployment => CurrentProject?.Deployment is not null
-        && CurrentProject.Images.Any(i => i.DeployCommands.Count > 0);
-    public string DeployServerInfo => CurrentProject?.Deployment is { } d ? $"{d.Host}:{d.Port}" : string.Empty;
+    public bool HasDeployment => ResolveDeploymentConfig() is not null
+        && CurrentProject!.Images.Any(i => i.DeployCommands.Count > 0);
+
+    public string DeployServerInfo
+    {
+        get
+        {
+            if (CurrentProject is null) return string.Empty;
+            var profile = _configurationService.ResolveProfile(CurrentProject);
+            if (profile is not null) return $"{profile.Host}:{profile.Port}";
+            return CurrentProject.Deployment is { } d ? $"{d.Host}:{d.Port}" : string.Empty;
+        }
+    }
 
     public bool IsOperationRunning
     {
@@ -81,6 +91,45 @@ public class ProjectDetailViewModel : ViewModelBase
         EditProjectCommand = new RelayCommand(
             () => { if (CurrentProject is not null) RequestEditProject?.Invoke(CurrentProject); },
             () => CurrentProject is not null);
+    }
+
+    private (DeploymentConfig config, string password, Dictionary<string, string>? variables)? ResolveDeployForExecution()
+    {
+        if (CurrentProject is null) return null;
+
+        var profile = _configurationService.ResolveProfile(CurrentProject);
+        if (profile is not null)
+        {
+            var config = new DeploymentConfig
+            {
+                Host = profile.Host,
+                Port = profile.Port,
+                Username = profile.Username,
+                EncryptedPassword = profile.EncryptedPassword,
+                WorkingDirectory = profile.WorkingDirectory,
+                UseSudo = profile.UseSudo
+            };
+            var password = _configurationService.DecryptPassword(profile.EncryptedPassword);
+            var variables = profile.CustomVariables.Count > 0 ? profile.CustomVariables : null;
+            return (config, password, variables);
+        }
+
+        if (CurrentProject.Deployment is { } deployment)
+        {
+            var password = _configurationService.DecryptPassword(deployment.EncryptedPassword);
+            return (deployment, password, null);
+        }
+
+        return null;
+    }
+
+    private DeploymentConfig? ResolveDeploymentConfig()
+    {
+        if (CurrentProject is null) return null;
+        var profile = _configurationService.ResolveProfile(CurrentProject);
+        if (profile is not null)
+            return new DeploymentConfig { Host = profile.Host, Port = profile.Port };
+        return CurrentProject.Deployment;
     }
 
     private bool CanRunOperation() => CurrentProject is not null && !IsOperationRunning;
@@ -235,7 +284,8 @@ public class ProjectDetailViewModel : ViewModelBase
 
     private async Task DeployAsync()
     {
-        if (CurrentProject?.Deployment is not { } deployment) return;
+        var resolved = ResolveDeployForExecution();
+        if (resolved is null || CurrentProject is null) return;
 
         _cts = new CancellationTokenSource();
         IsOperationRunning = true;
@@ -252,8 +302,8 @@ public class ProjectDetailViewModel : ViewModelBase
                 return;
             }
 
-            var password = _configurationService.DecryptPassword(deployment.EncryptedPassword);
-            await _deploymentService.DeployAsync(deployment, password, commands, Log, _cts.Token);
+            var (config, password, variables) = resolved.Value;
+            await _deploymentService.DeployAsync(config, password, commands, variables, Log, _cts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -315,7 +365,8 @@ public class ProjectDetailViewModel : ViewModelBase
             }
 
             // 3. Deploy — solo comandi delle immagini processate
-            if (CurrentProject.Deployment is { } deployment)
+            var resolved = ResolveDeployForExecution();
+            if (resolved is not null)
             {
                 var commands = imagesToProcess
                     .SelectMany(i => i.DeployCommands)
@@ -324,8 +375,8 @@ public class ProjectDetailViewModel : ViewModelBase
                 if (commands.Count > 0)
                 {
                     Log(new LogEntry { Level = LogLevel.Info, Message = "=== Deploy ===" });
-                    var password = _configurationService.DecryptPassword(deployment.EncryptedPassword);
-                    await _deploymentService.DeployAsync(deployment, password, commands, Log, _cts.Token);
+                    var (config, password, variables) = resolved.Value;
+                    await _deploymentService.DeployAsync(config, password, commands, variables, Log, _cts.Token);
                 }
                 else
                 {
