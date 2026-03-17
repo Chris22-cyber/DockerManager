@@ -7,11 +7,8 @@ namespace DockerManager.App.ViewModels;
 public class ProjectEditDialogViewModel : ViewModelBase
 {
     private string _name = string.Empty;
-    private string _dockerfilePath = string.Empty;
-    private string _contextDirectory = string.Empty;
-    private string _imageName = string.Empty;
-    private string _registry = string.Empty;
-    private string _newTag = string.Empty;
+    private string _rootDirectory = string.Empty;
+    private string _description = string.Empty;
 
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public bool IsNew { get; set; } = true;
@@ -22,57 +19,45 @@ public class ProjectEditDialogViewModel : ViewModelBase
         set => SetProperty(ref _name, value);
     }
 
-    public string DockerfilePath
+    public string RootDirectory
     {
-        get => _dockerfilePath;
-        set => SetProperty(ref _dockerfilePath, value);
+        get => _rootDirectory;
+        set => SetProperty(ref _rootDirectory, value);
     }
 
-    public string ContextDirectory
+    public string Description
     {
-        get => _contextDirectory;
-        set => SetProperty(ref _contextDirectory, value);
+        get => _description;
+        set => SetProperty(ref _description, value);
     }
 
-    public string ImageName
-    {
-        get => _imageName;
-        set => SetProperty(ref _imageName, value);
-    }
-
-    public string Registry
-    {
-        get => _registry;
-        set => SetProperty(ref _registry, value);
-    }
-
-    public string NewTag
-    {
-        get => _newTag;
-        set => SetProperty(ref _newTag, value);
-    }
-
-    public ObservableCollection<string> Tags { get; } = new() { "latest" };
+    public ObservableCollection<DockerImageConfig> Images { get; } = new();
     public Dictionary<string, string> BuildArgs { get; set; } = new();
 
-    public RelayCommand AddTagCommand { get; }
-    public RelayCommand RemoveTagCommand { get; }
+    public RelayCommand AddImageCommand { get; }
+    public RelayCommand RemoveImageCommand { get; }
+    public RelayCommand EditImageCommand { get; }
+
+    public event Action? RequestAddImage;
+    public event Action<DockerImageConfig>? RequestEditImage;
 
     public ProjectEditDialogViewModel()
     {
-        AddTagCommand = new RelayCommand(() =>
+        AddImageCommand = new RelayCommand(() =>
         {
-            if (!string.IsNullOrWhiteSpace(NewTag) && !Tags.Contains(NewTag))
-            {
-                Tags.Add(NewTag);
-                NewTag = string.Empty;
-            }
+            RequestAddImage?.Invoke();
         });
 
-        RemoveTagCommand = new RelayCommand(param =>
+        RemoveImageCommand = new RelayCommand(param =>
         {
-            if (param is string tag)
-                Tags.Remove(tag);
+            if (param is DockerImageConfig image)
+                Images.Remove(image);
+        });
+
+        EditImageCommand = new RelayCommand(param =>
+        {
+            if (param is DockerImageConfig image)
+                RequestEditImage?.Invoke(image);
         });
     }
 
@@ -81,32 +66,26 @@ public class ProjectEditDialogViewModel : ViewModelBase
         Id = project.Id;
         IsNew = false;
         Name = project.Name;
-        DockerfilePath = project.DockerfilePath;
-        ContextDirectory = project.ContextDirectory;
-        ImageName = project.ImageName;
-        Registry = project.Registry;
+        RootDirectory = project.RootDirectory;
+        Description = project.Description;
         BuildArgs = new Dictionary<string, string>(project.BuildArgs);
 
-        Tags.Clear();
-        foreach (var tag in project.DefaultTags)
-            Tags.Add(tag);
+        Images.Clear();
+        foreach (var image in project.Images)
+            Images.Add(image);
     }
 
     public ProjectConfig ToProjectConfig() => new()
     {
         Id = Id,
         Name = Name,
-        DockerfilePath = DockerfilePath,
-        ContextDirectory = ContextDirectory,
-        ImageName = ImageName,
-        Registry = Registry,
-        DefaultTags = Tags.ToList(),
+        RootDirectory = RootDirectory,
+        Description = Description,
+        Images = Images.ToList(),
         BuildArgs = new Dictionary<string, string>(BuildArgs)
     };
 
     public bool IsValid =>
         !string.IsNullOrWhiteSpace(Name) &&
-        !string.IsNullOrWhiteSpace(DockerfilePath) &&
-        !string.IsNullOrWhiteSpace(ContextDirectory) &&
-        !string.IsNullOrWhiteSpace(ImageName);
+        !string.IsNullOrWhiteSpace(RootDirectory);
 }

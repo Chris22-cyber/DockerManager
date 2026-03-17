@@ -12,4 +12,7 @@ public interface IConfigurationService
     void RemoveProject(string projectId);
     string EncryptPassword(string plainText);
     string DecryptPassword(string encrypted);
+    Task ExportProjectAsync(string projectId, string filePath);
+    Task ImportProjectAsync(string filePath);
+    Task ExportAllProjectsAsync(string filePath);
 }

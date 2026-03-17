@@ -5,42 +5,60 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
-        <StackPanel MaxWidth="500">
-            <TextBlock Text="Impostazioni" FontSize="20" FontWeight="Bold"
-                       Foreground="White" Margin="0,0,0,20"/>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+        <StackPanel MaxWidth="500" Margin="24">
 
             <!-- Docker CLI -->
-            <TextBlock Text="Percorso Docker CLI" Foreground="Gray" Margin="0,0,0,4"/>
-            <TextBox Text="{Binding DockerCliPath, UpdateSourceTrigger=PropertyChanged}"
-                     Padding="6" Margin="0,0,0,4"/>
-            <Button Content="Verifica Docker" Command="{Binding TestDockerCommand}"
-                    Padding="8,4" HorizontalAlignment="Left" Margin="0,0,0,15"/>
+            <TextBlock Text="Docker CLI" FontSize="15" FontFamily="Segoe UI Semibold"
+                       Foreground="{DynamicResource OnSurface}" Margin="0,0,0,12"/>
+
+            <Border Background="{DynamicResource SurfaceLowest}" CornerRadius="10"
+                    Padding="20,16" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Percorso Docker CLI" Foreground="{DynamicResource OnSurfaceVariant}"
+                               FontSize="12" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding DockerCliPath, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource AppTextBox}" Margin="0,0,0,8"/>
+                    <Button Content="Verifica Docker" Command="{Binding TestDockerCommand}"
+                            Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </Border>
 
             <!-- Registry -->
-            <TextBlock Text="Registry Predefinito" FontSize="16" FontWeight="SemiBold"
-                       Foreground="White" Margin="0,10,0,10"/>
+            <TextBlock Text="Registry Predefinito" FontSize="15" FontFamily="Segoe UI Semibold"
+                       Foreground="{DynamicResource OnSurface}" Margin="0,0,0,12"/>
 
-            <TextBlock Text="Server" Foreground="Gray" Margin="0,0,0,4"/>
-            <TextBox Text="{Binding RegistryServer, UpdateSourceTrigger=PropertyChanged}"
-                     Padding="6" Margin="0,0,0,10"/>
+            <Border Background="{DynamicResource SurfaceLowest}" CornerRadius="10"
+                    Padding="20,16" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Server" Foreground="{DynamicResource OnSurfaceVariant}"
+                               FontSize="12" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding RegistryServer, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource AppTextBox}" Margin="0,0,0,12"/>
 
-            <TextBlock Text="Username" Foreground="Gray" Margin="0,0,0,4"/>
-            <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
-                     Padding="6" Margin="0,0,0,10"/>
+                    <TextBlock Text="Username" Foreground="{DynamicResource OnSurfaceVariant}"
+                               FontSize="12" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource AppTextBox}" Margin="0,0,0,12"/>
 
-            <TextBlock Text="Password" Foreground="Gray" Margin="0,0,0,4"/>
-            <PasswordBox x:Name="PasswordBox" Padding="6" Margin="0,0,0,4"/>
-            <Button Content="Test Login" Command="{Binding TestLoginCommand}"
-                    Padding="8,4" HorizontalAlignment="Left" Margin="0,0,0,15"/>
+                    <TextBlock Text="Password" Foreground="{DynamicResource OnSurfaceVariant}"
+                               FontSize="12" Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="PasswordBox" Padding="10,8" Margin="0,0,0,8"
+                                 Background="{DynamicResource SurfaceContainerHigh}"
+                                 BorderThickness="0"/>
+                    <Button Content="Test Login" Command="{Binding TestLoginCommand}"
+                            Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </Border>
 
             <!-- Save -->
             <Button Content="Salva Impostazioni" Command="{Binding SaveCommand}"
-                    Padding="12,6" Background="#0078D4" Foreground="White"
-                    FontWeight="Bold" HorizontalAlignment="Left" Margin="0,10,0,10"/>
+                    Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left"
+                    Margin="0,4,0,12"/>
 
             <!-- Status -->
-            <TextBlock Text="{Binding StatusMessage}" Foreground="#0af" Margin="0,5,0,0"/>
+            <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource Primary}"
+                       Margin="0,4,0,0"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

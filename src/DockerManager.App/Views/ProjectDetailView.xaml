@@ -10,102 +10,128 @@
         <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
-    <Grid Margin="10">
+    <Grid Margin="20">
         <!-- No project selected -->
-        <TextBlock Text="Seleziona un progetto o creane uno nuovo"
-                   VerticalAlignment="Center" HorizontalAlignment="Center"
-                   Foreground="Gray" FontSize="14"
-                   Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}, ConverterParameter=invert}"/>
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+            <Image Source="/Resources/logo.png" Height="64" Width="64" Opacity="0.3" Margin="0,0,0,12"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
+            <TextBlock Text="Seleziona un progetto o creane uno nuovo"
+                       Foreground="{DynamicResource OnSurfaceVariant}" FontSize="14"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
 
         <!-- Project detail -->
         <DockPanel Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}}">
 
             <!-- Action buttons -->
-            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
-                        HorizontalAlignment="Center" Margin="0,10,0,0">
-                <Button Content="Build" Command="{Binding BuildCommand}"
-                        Padding="16,6" Margin="4" MinWidth="80"
-                        Background="#0078D4" Foreground="White" FontWeight="Bold"/>
-                <Button Content="Tag" Command="{Binding TagCommand}"
-                        Padding="16,6" Margin="4" MinWidth="80"
-                        Background="#107C10" Foreground="White" FontWeight="Bold"/>
-                <Button Content="Push" Command="{Binding PushCommand}"
-                        Padding="16,6" Margin="4" MinWidth="80"
-                        Background="#E81123" Foreground="White" FontWeight="Bold"/>
-                <Button Content="Annulla" Command="{Binding CancelCommand}"
-                        Padding="16,6" Margin="4" MinWidth="80"/>
-            </StackPanel>
+            <Border DockPanel.Dock="Bottom" Background="{DynamicResource SurfaceContainerLow}"
+                    CornerRadius="12" Padding="16,10" Margin="0,16,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Content="Build All" Command="{Binding BuildAllCommand}"
+                            Style="{StaticResource PrimaryButton}" Margin="4,0" MinWidth="110"/>
+                    <Button Content="Build Selezionate" Command="{Binding BuildSelectedCommand}"
+                            Style="{StaticResource SecondaryButton}" Margin="4,0" MinWidth="130"/>
+                    <Button Content="Push All" Command="{Binding PushAllCommand}"
+                            Style="{StaticResource DangerButton}" Margin="4,0" MinWidth="110"/>
+                    <Button Content="Push Selezionate" Command="{Binding PushSelectedCommand}"
+                            Style="{StaticResource SecondaryButton}" Margin="4,0" MinWidth="130"/>
+                    <Button Content="Annulla" Command="{Binding CancelCommand}"
+                            Style="{StaticResource TertiaryButton}" Margin="4,0" MinWidth="80"/>
+                </StackPanel>
+            </Border>
 
             <!-- Project info -->
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <DockPanel Margin="0,0,0,5">
-                        <TextBlock Text="Progetto" FontSize="18" FontWeight="Bold"
-                                   Foreground="White" VerticalAlignment="Center"/>
+                    <DockPanel Margin="0,0,0,12">
+                        <TextBlock Text="{Binding CurrentProject.Name}" FontSize="22"
+                                   FontFamily="Segoe UI Semibold"
+                                   Foreground="{DynamicResource OnSurface}" VerticalAlignment="Center"/>
                         <Button Content="Modifica" Command="{Binding EditProjectCommand}"
-                                HorizontalAlignment="Right" Padding="8,3"/>
+                                Style="{StaticResource TertiaryButton}"
+                                HorizontalAlignment="Right"/>
                     </DockPanel>
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="120"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+                    <!-- Info card -->
+                    <Border Background="{DynamicResource SurfaceLowest}" CornerRadius="10"
+                            Padding="20,16" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Nome:" Foreground="Gray" Margin="0,4"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentProject.Name}"
-                                   Foreground="White" Margin="0,4"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Root Directory"
+                                       Foreground="{DynamicResource OnSurfaceVariant}" Margin="0,4"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentProject.RootDirectory}"
+                                       Foreground="{DynamicResource OnSurface}" Margin="0,4"
+                                       TextTrimming="CharacterEllipsis"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Dockerfile:" Foreground="Gray" Margin="0,4"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentProject.DockerfilePath}"
-                                   Foreground="White" Margin="0,4" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Descrizione"
+                                       Foreground="{DynamicResource OnSurfaceVariant}" Margin="0,4"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentProject.Description}"
+                                       Foreground="{DynamicResource OnSurface}" Margin="0,4"/>
+                        </Grid>
+                    </Border>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Immagine:" Foreground="Gray" Margin="0,4"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CurrentProject.ImageName}"
-                                   Foreground="White" Margin="0,4"/>
+                    <!-- Images list header -->
+                    <TextBlock Text="Immagini" FontSize="15" FontFamily="Segoe UI Semibold"
+                               Foreground="{DynamicResource OnSurface}" Margin="0,0,0,8"/>
 
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Registry:" Foreground="Gray" Margin="0,4"/>
-                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentProject.Registry}"
-                                   Foreground="White" Margin="0,4"/>
-
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Tag:" Foreground="Gray" Margin="0,4"/>
-                        <ItemsControl Grid.Row="4" Grid.Column="1"
-                                      ItemsSource="{Binding CurrentProject.DefaultTags}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="#333" CornerRadius="3" Padding="6,2" Margin="2">
-                                        <TextBlock Text="{Binding}" Foreground="#0af"/>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-
-                    <!-- Tag selector for operations -->
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <TextBlock Text="Tag operazione:" Foreground="Gray" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <ComboBox ItemsSource="{Binding CurrentProject.DefaultTags}"
-                                  SelectedItem="{Binding SelectedTag}"
-                                  IsEditable="True"
-                                  MinWidth="150"/>
-                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding Images}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource SurfaceLowest}" CornerRadius="8"
+                                        Padding="14,10" Margin="0,3">
+                                    <DockPanel>
+                                        <CheckBox DockPanel.Dock="Left" IsChecked="{Binding IsSelected}"
+                                                  VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Image.Name}"
+                                                       Foreground="{DynamicResource OnSurface}"
+                                                       FontFamily="Segoe UI Semibold" FontSize="13"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <TextBlock Text="{Binding Image.ImageName}"
+                                                           Foreground="{DynamicResource OnSurfaceVariant}" FontSize="11"/>
+                                                <TextBlock Text=" | " Foreground="{DynamicResource OutlineVariant}" FontSize="11"/>
+                                                <TextBlock Text="{Binding Image.DockerfilePath}"
+                                                           Foreground="{DynamicResource OnSurfaceVariant}" FontSize="11"/>
+                                            </StackPanel>
+                                            <ItemsControl ItemsSource="{Binding Image.Tags}" Margin="0,4,0,0">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Background="{DynamicResource PrimaryFixed}"
+                                                                CornerRadius="10" Padding="8,2" Margin="2,0">
+                                                            <TextBlock Text="{Binding}"
+                                                                       Foreground="{DynamicResource Primary}" FontSize="10"/>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
                     <!-- Progress -->
-                    <ProgressBar IsIndeterminate="{Binding IsOperationRunning}"
-                                 Height="4" Margin="0,10,0,0"
-                                 Visibility="{Binding IsOperationRunning, Converter={StaticResource BoolToVis}}"/>
+                    <Border CornerRadius="2" Margin="0,12,0,0" ClipToBounds="True"
+                            Visibility="{Binding IsOperationRunning, Converter={StaticResource BoolToVis}}">
+                        <ProgressBar IsIndeterminate="{Binding IsOperationRunning}"
+                                     Height="4" Foreground="{DynamicResource Primary}"
+                                     Background="{DynamicResource SurfaceContainerHigh}"/>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
         </DockPanel>

@@ -19,25 +19,46 @@ public class DockerService : IDockerService
     private string DockerPath => _configService.Configuration.DockerCliPath;
 
     public async Task<DockerOperationResult> BuildAsync(
-        ProjectConfig project,
+        DockerImageConfig image,
+        string rootDirectory,
         string tag,
+        Dictionary<string, string>? globalBuildArgs = null,
         Action<LogEntry>? onLog = null,
         CancellationToken cancellationToken = default)
     {
-        var fullImage = string.IsNullOrEmpty(project.Registry)
-            ? $"{project.ImageName}:{tag}"
-            : $"{project.Registry}/{project.ImageName}:{tag}";
+        var fullImage = string.IsNullOrEmpty(image.Registry)
+            ? $"{image.ImageName}:{tag}"
+            : $"{image.Registry}/{image.ImageName}:{tag}";
+
+        var dockerfilePath = Path.IsPathRooted(image.DockerfilePath)
+            ? image.DockerfilePath
+            : Path.Combine(rootDirectory, image.DockerfilePath);
+
+        var contextDir = Path.IsPathRooted(image.ContextDirectory)
+            ? image.ContextDirectory
+            : Path.Combine(rootDirectory, image.ContextDirectory);
 
         var args = new StringBuilder();
         args.Append($"build -t {fullImage}");
-        args.Append($" -f \"{project.DockerfilePath}\"");
+        args.Append($" -f \"{dockerfilePath}\"");
 
-        foreach (var (key, value) in project.BuildArgs)
+        // Global build args (inherited from project)
+        if (globalBuildArgs != null)
+        {
+            foreach (var (key, value) in globalBuildArgs)
+            {
+                if (!image.BuildArgs.ContainsKey(key))
+                    args.Append($" --build-arg {key}={value}");
+            }
+        }
+
+        // Image-specific build args (override globals)
+        foreach (var (key, value) in image.BuildArgs)
         {
             args.Append($" --build-arg {key}={value}");
         }
 
-        args.Append($" \"{project.ContextDirectory}\"");
+        args.Append($" \"{contextDir}\"");
 
         onLog?.Invoke(new LogEntry
         {
@@ -45,22 +66,50 @@ public class DockerService : IDockerService
             Message = $"Building {fullImage}..."
         });
 
-        return await RunDockerCommandAsync(args.ToString(), project.ContextDirectory, onLog, cancellationToken);
+        return await RunDockerCommandAsync(args.ToString(), contextDir, onLog, cancellationToken);
     }
 
-    public async Task<DockerOperationResult> TagAsync(
-        string sourceImage,
-        string targetImage,
+    public async Task<List<DockerOperationResult>> BuildAllAsync(
+        ProjectConfig project,
         Action<LogEntry>? onLog = null,
         CancellationToken cancellationToken = default)
     {
+        var results = new List<DockerOperationResult>();
+
         onLog?.Invoke(new LogEntry
         {
             Level = LogLevel.Info,
-            Message = $"Tagging {sourceImage} -> {targetImage}..."
+            Message = $"Building all images for project '{project.Name}' ({project.Images.Count} images)..."
         });
 
-        return await RunDockerCommandAsync($"tag {sourceImage} {targetImage}", null, onLog, cancellationToken);
+        foreach (var image in project.Images)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            foreach (var tag in image.Tags)
+            {
+                var result = await BuildAsync(image, project.RootDirectory, tag, project.BuildArgs, onLog, cancellationToken);
+                results.Add(result);
+
+                if (!result.Success)
+                {
+                    onLog?.Invoke(new LogEntry
+                    {
+                        Level = LogLevel.Error,
+                        Message = $"Build failed for image '{image.Name}' with tag '{tag}'. Stopping."
+                    });
+                    return results;
+                }
+            }
+        }
+
+        onLog?.Invoke(new LogEntry
+        {
+            Level = LogLevel.Success,
+            Message = $"All images built successfully for project '{project.Name}'."
+        });
+
+        return results;
     }
 
     public async Task<DockerOperationResult> PushAsync(
@@ -77,6 +126,53 @@ public class DockerService : IDockerService
         });
 
         return await RunDockerCommandAsync($"push {fullImage}", null, onLog, cancellationToken);
+    }
+
+    public async Task<List<DockerOperationResult>> PushAllAsync(
+        ProjectConfig project,
+        Action<LogEntry>? onLog = null,
+        CancellationToken cancellationToken = default)
+    {
+        var results = new List<DockerOperationResult>();
+
+        onLog?.Invoke(new LogEntry
+        {
+            Level = LogLevel.Info,
+            Message = $"Pushing all images for project '{project.Name}' ({project.Images.Count} images)..."
+        });
+
+        foreach (var image in project.Images)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var fullImageName = string.IsNullOrEmpty(image.Registry)
+                ? image.ImageName
+                : $"{image.Registry}/{image.ImageName}";
+
+            foreach (var tag in image.Tags)
+            {
+                var result = await PushAsync(fullImageName, tag, onLog, cancellationToken);
+                results.Add(result);
+
+                if (!result.Success)
+                {
+                    onLog?.Invoke(new LogEntry
+                    {
+                        Level = LogLevel.Error,
+                        Message = $"Push failed for image '{image.Name}' with tag '{tag}'. Stopping."
+                    });
+                    return results;
+                }
+            }
+        }
+
+        onLog?.Invoke(new LogEntry
+        {
+            Level = LogLevel.Success,
+            Message = $"All images pushed successfully for project '{project.Name}'."
+        });
+
+        return results;
     }
 
     public async Task<DockerOperationResult> LoginAsync(

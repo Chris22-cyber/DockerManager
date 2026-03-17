@@ -6,6 +6,7 @@ namespace DockerManager.App.ViewModels;
 public class MainWindowViewModel : ViewModelBase
 {
     private readonly IDockerService _dockerService;
+    private readonly IConfigurationService _configService;
     private bool _isDockerAvailable;
     private string _statusBarText = "Pronto";
 
@@ -13,6 +14,7 @@ public class MainWindowViewModel : ViewModelBase
     public ProjectDetailViewModel ProjectDetail { get; }
     public LogOutputViewModel LogOutput { get; }
     public SettingsViewModel Settings { get; }
+    public IConfigurationService ConfigService => _configService;
 
     public bool IsDockerAvailable
     {
@@ -27,6 +29,11 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     public AsyncRelayCommand InitializeCommand { get; }
+    public AsyncRelayCommand ImportProjectCommand { get; }
+    public AsyncRelayCommand ExportProjectCommand { get; }
+
+    public event Func<Task>? RequestImportProject;
+    public event Func<Task>? RequestExportProject;
 
     public MainWindowViewModel(
         ProjectListViewModel projectList,
@@ -41,6 +48,7 @@ public class MainWindowViewModel : ViewModelBase
         LogOutput = logOutput;
         Settings = settings;
         _dockerService = dockerService;
+        _configService = configService;
 
         ProjectList.SelectedProjectChanged += project =>
         {
@@ -61,6 +69,18 @@ public class MainWindowViewModel : ViewModelBase
             LogOutput.AddLog(IsDockerAvailable
                 ? "Docker Manager avviato. Docker rilevato."
                 : "Attenzione: Docker non trovato. Verifica le impostazioni.");
+        });
+
+        ImportProjectCommand = new AsyncRelayCommand(async () =>
+        {
+            if (RequestImportProject != null)
+                await RequestImportProject.Invoke();
+        });
+
+        ExportProjectCommand = new AsyncRelayCommand(async () =>
+        {
+            if (RequestExportProject != null)
+                await RequestExportProject.Invoke();
         });
     }
 }

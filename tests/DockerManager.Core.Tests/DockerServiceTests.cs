@@ -45,11 +45,11 @@ public class DockerServiceTests
     [Fact]
     public async Task BuildAsync_CallsProcessRunner_WithCorrectArgs()
     {
-        var project = new ProjectConfig
+        var image = new DockerImageConfig
         {
-            Name = "test",
-            DockerfilePath = @"C:\test\Dockerfile",
-            ContextDirectory = @"C:\test",
+            Name = "api",
+            DockerfilePath = "Dockerfile",
+            ContextDirectory = ".",
             ImageName = "myapp",
             Registry = "docker.io/user"
         };
@@ -60,7 +60,7 @@ public class DockerServiceTests
                 It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0);
 
-        var result = await _service.BuildAsync(project, "latest");
+        var result = await _service.BuildAsync(image, @"C:\test", "latest");
 
         Assert.True(result.Success);
         _processRunner.Verify(p => p.RunAsync(
@@ -71,6 +71,72 @@ public class DockerServiceTests
             It.IsAny<Action<string>?>(),
             It.IsAny<string?>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task BuildAsync_MergesGlobalAndImageBuildArgs()
+    {
+        var image = new DockerImageConfig
+        {
+            Name = "api",
+            DockerfilePath = "Dockerfile",
+            ContextDirectory = ".",
+            ImageName = "myapp",
+            BuildArgs = new Dictionary<string, string> { { "ENV", "prod" } }
+        };
+
+        var globalArgs = new Dictionary<string, string>
+        {
+            { "DOTNET_VERSION", "8.0" },
+            { "ENV", "staging" } // should be overridden by image-specific
+        };
+
+        _processRunner
+            .Setup(p => p.RunAsync(It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string?>(), It.IsAny<Action<string>?>(), It.IsAny<Action<string>?>(),
+                It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        var result = await _service.BuildAsync(image, @"C:\test", "latest", globalArgs);
+
+        Assert.True(result.Success);
+        _processRunner.Verify(p => p.RunAsync(
+            "docker",
+            It.Is<string>(s =>
+                s.Contains("--build-arg DOTNET_VERSION=8.0") &&
+                s.Contains("--build-arg ENV=prod") &&
+                !s.Contains("ENV=staging")),
+            It.IsAny<string?>(),
+            It.IsAny<Action<string>?>(),
+            It.IsAny<Action<string>?>(),
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task BuildAllAsync_BuildsAllImagesInProject()
+    {
+        var project = new ProjectConfig
+        {
+            Name = "test-project",
+            RootDirectory = @"C:\test",
+            Images = new List<DockerImageConfig>
+            {
+                new() { Name = "api", DockerfilePath = "api/Dockerfile", ContextDirectory = "api", ImageName = "myapp-api", Tags = new() { "latest" } },
+                new() { Name = "web", DockerfilePath = "web/Dockerfile", ContextDirectory = "web", ImageName = "myapp-web", Tags = new() { "latest" } }
+            }
+        };
+
+        _processRunner
+            .Setup(p => p.RunAsync(It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string?>(), It.IsAny<Action<string>?>(), It.IsAny<Action<string>?>(),
+                It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        var results = await _service.BuildAllAsync(project);
+
+        Assert.Equal(2, results.Count);
+        Assert.All(results, r => Assert.True(r.Success));
     }
 
     [Fact]

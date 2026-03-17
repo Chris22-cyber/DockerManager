@@ -1,6 +1,6 @@
 using System.Windows;
 using DockerManager.App.ViewModels;
-using Microsoft.Win32;
+using DockerManager.Core.Models;
 
 namespace DockerManager.App.Views;
 
@@ -12,13 +12,46 @@ public partial class ProjectEditDialog : Window
     {
         InitializeComponent();
         DataContext = new ProjectEditDialogViewModel();
+
+        ViewModel.RequestAddImage += ShowAddImageDialog;
+        ViewModel.RequestEditImage += ShowEditImageDialog;
+    }
+
+    private void ShowAddImageDialog()
+    {
+        var dialog = new ImageEditDialog { Owner = this };
+        if (dialog.ShowDialog() == true)
+        {
+            ViewModel.Images.Add(dialog.ViewModel.ToDockerImageConfig());
+        }
+    }
+
+    private void ShowEditImageDialog(DockerImageConfig image)
+    {
+        var dialog = new ImageEditDialog { Owner = this };
+        dialog.ViewModel.LoadFrom(image);
+        if (dialog.ShowDialog() == true)
+        {
+            var updated = dialog.ViewModel.ToDockerImageConfig();
+            var index = -1;
+            for (int i = 0; i < ViewModel.Images.Count; i++)
+            {
+                if (ViewModel.Images[i].Id == updated.Id)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (index >= 0)
+                ViewModel.Images[index] = updated;
+        }
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         if (!ViewModel.IsValid)
         {
-            MessageBox.Show("Compila tutti i campi obbligatori (Nome, Dockerfile, Directory Contesto, Nome Immagine).",
+            MessageBox.Show("Compila tutti i campi obbligatori (Nome, Root Directory).",
                 "Validazione", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -32,31 +65,15 @@ public partial class ProjectEditDialog : Window
         Close();
     }
 
-    private void BrowseDockerfile_Click(object sender, RoutedEventArgs e)
+    private void BrowseRootDirectory_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new OpenFileDialog
+        var dlg = new Microsoft.Win32.OpenFolderDialog
         {
-            Title = "Seleziona Dockerfile",
-            Filter = "Dockerfile|Dockerfile;Dockerfile.*|Tutti i file|*.*"
+            Title = "Seleziona Root Directory del progetto"
         };
         if (dlg.ShowDialog() == true)
         {
-            ViewModel.DockerfilePath = dlg.FileName;
-
-            if (string.IsNullOrEmpty(ViewModel.ContextDirectory))
-                ViewModel.ContextDirectory = System.IO.Path.GetDirectoryName(dlg.FileName) ?? string.Empty;
-        }
-    }
-
-    private void BrowseContext_Click(object sender, RoutedEventArgs e)
-    {
-        var dlg = new OpenFolderDialog
-        {
-            Title = "Seleziona directory contesto"
-        };
-        if (dlg.ShowDialog() == true)
-        {
-            ViewModel.ContextDirectory = dlg.FolderName;
+            ViewModel.RootDirectory = dlg.FolderName;
         }
     }
 }

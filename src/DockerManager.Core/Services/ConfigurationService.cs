@@ -64,6 +64,37 @@ public class ConfigurationService : IConfigurationService
         Configuration.Projects.RemoveAll(p => p.Id == projectId);
     }
 
+    public async Task ExportProjectAsync(string projectId, string filePath)
+    {
+        var project = Configuration.Projects.Find(p => p.Id == projectId);
+        if (project is null)
+            throw new InvalidOperationException($"Project with id '{projectId}' not found.");
+
+        var json = JsonSerializer.Serialize(project, JsonOptions);
+        await File.WriteAllTextAsync(filePath, json);
+    }
+
+    public async Task ImportProjectAsync(string filePath)
+    {
+        var json = await File.ReadAllTextAsync(filePath);
+        var project = JsonSerializer.Deserialize<ProjectConfig>(json, JsonOptions);
+        if (project is null)
+            throw new InvalidOperationException("Invalid project file.");
+
+        // Assign new ID to avoid conflicts
+        project.Id = Guid.NewGuid().ToString();
+        foreach (var image in project.Images)
+            image.Id = Guid.NewGuid().ToString();
+
+        Configuration.Projects.Add(project);
+    }
+
+    public async Task ExportAllProjectsAsync(string filePath)
+    {
+        var json = JsonSerializer.Serialize(Configuration.Projects, JsonOptions);
+        await File.WriteAllTextAsync(filePath, json);
+    }
+
     public string EncryptPassword(string plainText)
     {
         if (string.IsNullOrEmpty(plainText)) return string.Empty;

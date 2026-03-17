@@ -32,7 +32,6 @@ public partial class App : Application
         services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddSingleton<IDockerService, DockerService>();
         services.AddSingleton<IDockerfileDiscoveryService, DockerfileDiscoveryService>();
-        services.AddSingleton<ITagGeneratorService, TagGeneratorService>();
 
         // ViewModels
         services.AddSingleton<LogOutputViewModel>();

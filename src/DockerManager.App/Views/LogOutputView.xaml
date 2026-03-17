@@ -10,30 +10,41 @@
         <converters:LogLevelToBrushConverter x:Key="LogLevelBrush"/>
     </UserControl.Resources>
 
-    <DockPanel>
-        <DockPanel DockPanel.Dock="Top" Margin="5,3">
-            <TextBlock Text="Log Output" FontWeight="Bold" Foreground="White"
-                       VerticalAlignment="Center"/>
+    <DockPanel Background="{DynamicResource SurfaceContainerLow}">
+        <DockPanel DockPanel.Dock="Top" Margin="12,6">
+            <TextBlock Text="Log Output" FontFamily="Segoe UI Semibold" FontSize="12"
+                       Foreground="{DynamicResource OnSurfaceVariant}" VerticalAlignment="Center"/>
             <Button Content="Pulisci" Command="{Binding ClearCommand}"
-                    HorizontalAlignment="Right" Padding="8,2"/>
+                    Style="{StaticResource TertiaryButton}"
+                    HorizontalAlignment="Right" Padding="8,3"/>
         </DockPanel>
 
-        <ListBox x:Name="LogList"
-                 ItemsSource="{Binding LogEntries}"
-                 Background="#0C0C0C"
-                 Foreground="White"
-                 BorderThickness="0"
-                 FontFamily="Consolas"
-                 FontSize="12"
-                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                 VirtualizingPanel.ScrollUnit="Pixel">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding}"
-                               Foreground="{Binding Level, Converter={StaticResource LogLevelBrush}}"
-                               TextWrapping="NoWrap"/>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+        <Border Margin="8,0,8,8" Background="{DynamicResource SurfaceLowest}"
+                CornerRadius="8" ClipToBounds="True">
+            <ListBox x:Name="LogList"
+                     ItemsSource="{Binding LogEntries}"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     FontFamily="Cascadia Code, Consolas, Courier New"
+                     FontSize="12"
+                     Padding="8,4"
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                     VirtualizingPanel.ScrollUnit="Pixel">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="4,1"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}"
+                                   Foreground="{Binding Level, Converter={StaticResource LogLevelBrush}}"
+                                   TextWrapping="NoWrap"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
     </DockPanel>
 </UserControl>
