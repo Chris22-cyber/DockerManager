@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <RootNamespace>DockerManager.App</RootNamespace>
-    <ApplicationIcon>Resources\docker.ico</ApplicationIcon>
+
   </PropertyGroup>
 
   <ItemGroup>
