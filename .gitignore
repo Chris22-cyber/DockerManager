@@ -1,0 +1,9 @@
+bin/
+obj/
+publish/
+output/
+*.user
+*.suo
+.vs/
+*.exe
+!installer/*.iss
