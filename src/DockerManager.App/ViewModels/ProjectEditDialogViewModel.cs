@@ -20,9 +20,9 @@ public class ProjectEditDialogViewModel : ViewModelBase
     private string _deployUsername = string.Empty;
     private string _deployPassword = string.Empty;
     private string _deployWorkingDirectory = string.Empty;
-    private string _newDeployCommand = string.Empty;
     private string _testConnectionStatus = string.Empty;
     private bool _isTestingConnection;
+    private bool _deployUseSudo;
 
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public bool IsNew { get; set; } = true;
@@ -79,10 +79,10 @@ public class ProjectEditDialogViewModel : ViewModelBase
         set => SetProperty(ref _deployWorkingDirectory, value);
     }
 
-    public string NewDeployCommand
+    public bool DeployUseSudo
     {
-        get => _newDeployCommand;
-        set => SetProperty(ref _newDeployCommand, value);
+        get => _deployUseSudo;
+        set => SetProperty(ref _deployUseSudo, value);
     }
 
     public string TestConnectionStatus
@@ -97,13 +97,9 @@ public class ProjectEditDialogViewModel : ViewModelBase
         set => SetProperty(ref _isTestingConnection, value);
     }
 
-    public ObservableCollection<string> DeployCommands { get; } = new();
-
     public RelayCommand AddImageCommand { get; }
     public RelayCommand RemoveImageCommand { get; }
     public RelayCommand EditImageCommand { get; }
-    public RelayCommand AddDeployCommandCommand { get; }
-    public RelayCommand RemoveDeployCommandCommand { get; }
     public AsyncRelayCommand TestConnectionCommand { get; }
 
     public event Action? RequestAddImage;
@@ -136,21 +132,6 @@ public class ProjectEditDialogViewModel : ViewModelBase
         {
             if (param is DockerImageConfig image)
                 RequestEditImage?.Invoke(image);
-        });
-
-        AddDeployCommandCommand = new RelayCommand(() =>
-        {
-            if (!string.IsNullOrWhiteSpace(NewDeployCommand))
-            {
-                DeployCommands.Add(NewDeployCommand.Trim());
-                NewDeployCommand = string.Empty;
-            }
-        });
-
-        RemoveDeployCommandCommand = new RelayCommand(param =>
-        {
-            if (param is string cmd)
-                DeployCommands.Remove(cmd);
         });
 
         TestConnectionCommand = new AsyncRelayCommand(TestConnectionAsync,
@@ -215,10 +196,7 @@ public class ProjectEditDialogViewModel : ViewModelBase
             DeployPassword = _configService is not null && !string.IsNullOrEmpty(deployment.EncryptedPassword)
                 ? _configService.DecryptPassword(deployment.EncryptedPassword)
                 : string.Empty;
-
-            DeployCommands.Clear();
-            foreach (var cmd in deployment.Commands)
-                DeployCommands.Add(cmd);
+            DeployUseSudo = deployment.UseSudo;
         }
     }
 
@@ -246,7 +224,7 @@ public class ProjectEditDialogViewModel : ViewModelBase
                     ? _configService.EncryptPassword(DeployPassword)
                     : string.Empty,
                 WorkingDirectory = DeployWorkingDirectory,
-                Commands = DeployCommands.ToList()
+                UseSudo = DeployUseSudo
             };
         }
 

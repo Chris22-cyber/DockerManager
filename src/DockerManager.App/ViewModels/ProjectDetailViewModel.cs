@@ -32,7 +32,8 @@ public class ProjectDetailViewModel : ViewModelBase
     }
 
     public bool HasProject => CurrentProject is not null;
-    public bool HasDeployment => CurrentProject?.Deployment is not null;
+    public bool HasDeployment => CurrentProject?.Deployment is not null
+        && CurrentProject.Images.Any(i => i.DeployCommands.Count > 0);
     public string DeployServerInfo => CurrentProject?.Deployment is { } d ? $"{d.Host}:{d.Port}" : string.Empty;
 
     public bool IsOperationRunning
@@ -241,8 +242,18 @@ public class ProjectDetailViewModel : ViewModelBase
 
         try
         {
+            var commands = CurrentProject.Images
+                .SelectMany(i => i.DeployCommands)
+                .ToList();
+
+            if (commands.Count == 0)
+            {
+                Log(new LogEntry { Level = LogLevel.Warning, Message = "Nessun comando deploy configurato." });
+                return;
+            }
+
             var password = _configurationService.DecryptPassword(deployment.EncryptedPassword);
-            await _deploymentService.DeployAsync(deployment, password, Log, _cts.Token);
+            await _deploymentService.DeployAsync(deployment, password, commands, Log, _cts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -264,30 +275,62 @@ public class ProjectDetailViewModel : ViewModelBase
 
         try
         {
-            // 1. Build All
-            Log(new LogEntry { Level = LogLevel.Info, Message = "=== Build All ===" });
-            var buildResults = await _dockerService.BuildAllAsync(CurrentProject, Log, _cts.Token);
-            if (buildResults.Any(r => !r.Success))
+            var selectedImages = Images.Where(i => i.IsSelected).Select(i => i.Image).ToList();
+            var imagesToProcess = selectedImages.Count > 0 ? selectedImages : CurrentProject.Images;
+
+            // 1. Build
+            Log(new LogEntry { Level = LogLevel.Info, Message = "=== Build ===" });
+            foreach (var image in imagesToProcess)
             {
-                Log(new LogEntry { Level = LogLevel.Error, Message = "Build fallita. Deploy annullato." });
-                return;
+                _cts.Token.ThrowIfCancellationRequested();
+                foreach (var tag in image.Tags)
+                {
+                    var result = await _dockerService.BuildAsync(image, CurrentProject.RootDirectory, tag, CurrentProject.BuildArgs, Log, _cts.Token);
+                    if (!result.Success)
+                    {
+                        Log(new LogEntry { Level = LogLevel.Error, Message = "Build fallita. Deploy annullato." });
+                        return;
+                    }
+                }
             }
 
-            // 2. Push All
-            Log(new LogEntry { Level = LogLevel.Info, Message = "=== Push All ===" });
-            var pushResults = await _dockerService.PushAllAsync(CurrentProject, Log, _cts.Token);
-            if (pushResults.Any(r => !r.Success))
+            // 2. Push
+            Log(new LogEntry { Level = LogLevel.Info, Message = "=== Push ===" });
+            foreach (var image in imagesToProcess)
             {
-                Log(new LogEntry { Level = LogLevel.Error, Message = "Push fallita. Deploy annullato." });
-                return;
+                _cts.Token.ThrowIfCancellationRequested();
+                var fullImageName = string.IsNullOrEmpty(image.Registry)
+                    ? image.ImageName
+                    : $"{image.Registry}/{image.ImageName}";
+
+                foreach (var tag in image.Tags)
+                {
+                    var result = await _dockerService.PushAsync(fullImageName, tag, Log, _cts.Token);
+                    if (!result.Success)
+                    {
+                        Log(new LogEntry { Level = LogLevel.Error, Message = "Push fallita. Deploy annullato." });
+                        return;
+                    }
+                }
             }
 
-            // 3. Deploy
+            // 3. Deploy — solo comandi delle immagini processate
             if (CurrentProject.Deployment is { } deployment)
             {
-                Log(new LogEntry { Level = LogLevel.Info, Message = "=== Deploy ===" });
-                var password = _configurationService.DecryptPassword(deployment.EncryptedPassword);
-                await _deploymentService.DeployAsync(deployment, password, Log, _cts.Token);
+                var commands = imagesToProcess
+                    .SelectMany(i => i.DeployCommands)
+                    .ToList();
+
+                if (commands.Count > 0)
+                {
+                    Log(new LogEntry { Level = LogLevel.Info, Message = "=== Deploy ===" });
+                    var password = _configurationService.DecryptPassword(deployment.EncryptedPassword);
+                    await _deploymentService.DeployAsync(deployment, password, commands, Log, _cts.Token);
+                }
+                else
+                {
+                    Log(new LogEntry { Level = LogLevel.Warning, Message = "Nessun comando deploy configurato per le immagini selezionate." });
+                }
             }
         }
         catch (OperationCanceledException)

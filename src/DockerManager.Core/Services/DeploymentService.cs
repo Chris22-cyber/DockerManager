@@ -10,6 +10,7 @@ public class DeploymentService : IDeploymentService
     public async Task<DockerOperationResult> DeployAsync(
         DeploymentConfig config,
         string decryptedPassword,
+        List<string> commands,
         Action<LogEntry>? onLog = null,
         CancellationToken cancellationToken = default)
     {
@@ -37,7 +38,7 @@ public class DeploymentService : IDeploymentService
                 Message = "Connessione SSH stabilita."
             });
 
-            foreach (var command in config.Commands)
+            foreach (var command in commands)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -47,9 +48,20 @@ public class DeploymentService : IDeploymentService
                     Message = $"Esecuzione: {command}"
                 });
 
-                var fullCommand = string.IsNullOrWhiteSpace(config.WorkingDirectory)
+                string fullCommand;
+                var innerCommand = string.IsNullOrWhiteSpace(config.WorkingDirectory)
                     ? command
                     : $"cd {config.WorkingDirectory} && {command}";
+
+                if (config.UseSudo)
+                {
+                    var escapedInner = innerCommand.Replace("'", "'\\''");
+                    fullCommand = $"echo '{decryptedPassword.Replace("'", "'\\''")}' | sudo -S sh -c '{escapedInner}'";
+                }
+                else
+                {
+                    fullCommand = innerCommand;
+                }
 
                 using var cmd = client.CreateCommand(fullCommand);
                 var result = await Task.Run(() => cmd.Execute(), cancellationToken);

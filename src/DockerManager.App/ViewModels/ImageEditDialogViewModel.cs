@@ -12,6 +12,7 @@ public class ImageEditDialogViewModel : ViewModelBase
     private string _imageName = string.Empty;
     private string _registry = string.Empty;
     private string _newTag = string.Empty;
+    private string _newDeployCommand = string.Empty;
 
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public bool IsNew { get; set; } = true;
@@ -52,11 +53,20 @@ public class ImageEditDialogViewModel : ViewModelBase
         set => SetProperty(ref _newTag, value);
     }
 
+    public string NewDeployCommand
+    {
+        get => _newDeployCommand;
+        set => SetProperty(ref _newDeployCommand, value);
+    }
+
     public ObservableCollection<string> Tags { get; } = new() { "latest" };
+    public ObservableCollection<string> DeployCommands { get; } = new();
     public Dictionary<string, string> BuildArgs { get; set; } = new();
 
     public RelayCommand AddTagCommand { get; }
     public RelayCommand RemoveTagCommand { get; }
+    public RelayCommand AddDeployCommandCommand { get; }
+    public RelayCommand RemoveDeployCommandCommand { get; }
 
     public ImageEditDialogViewModel()
     {
@@ -74,6 +84,21 @@ public class ImageEditDialogViewModel : ViewModelBase
             if (param is string tag)
                 Tags.Remove(tag);
         });
+
+        AddDeployCommandCommand = new RelayCommand(() =>
+        {
+            if (!string.IsNullOrWhiteSpace(NewDeployCommand))
+            {
+                DeployCommands.Add(NewDeployCommand.Trim());
+                NewDeployCommand = string.Empty;
+            }
+        });
+
+        RemoveDeployCommandCommand = new RelayCommand(param =>
+        {
+            if (param is string cmd)
+                DeployCommands.Remove(cmd);
+        });
     }
 
     public void LoadFrom(DockerImageConfig image)
@@ -90,6 +115,10 @@ public class ImageEditDialogViewModel : ViewModelBase
         Tags.Clear();
         foreach (var tag in image.Tags)
             Tags.Add(tag);
+
+        DeployCommands.Clear();
+        foreach (var cmd in image.DeployCommands)
+            DeployCommands.Add(cmd);
     }
 
     public DockerImageConfig ToDockerImageConfig() => new()
@@ -101,7 +130,8 @@ public class ImageEditDialogViewModel : ViewModelBase
         ImageName = ImageName,
         Registry = Registry,
         Tags = Tags.ToList(),
-        BuildArgs = new Dictionary<string, string>(BuildArgs)
+        BuildArgs = new Dictionary<string, string>(BuildArgs),
+        DeployCommands = DeployCommands.ToList()
     };
 
     public bool IsValid =>

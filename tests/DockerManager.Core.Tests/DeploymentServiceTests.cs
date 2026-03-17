@@ -8,13 +8,12 @@ public class DeploymentServiceTests
 {
     private readonly DeploymentService _service = new();
 
-    private static DeploymentConfig CreateConfig(params string[] commands) => new()
+    private static DeploymentConfig CreateConfig() => new()
     {
         Host = "192.168.1.100",
         Port = 22,
         Username = "testuser",
-        WorkingDirectory = "/opt/myapp",
-        Commands = commands.ToList()
+        WorkingDirectory = "/opt/myapp"
     };
 
     [Fact]
@@ -30,10 +29,11 @@ public class DeploymentServiceTests
     [Fact]
     public async Task DeployAsync_ReturnsError_WhenConnectionFails()
     {
-        var config = CreateConfig("echo hello");
+        var config = CreateConfig();
+        var commands = new List<string> { "echo hello" };
         var logs = new List<LogEntry>();
 
-        var result = await _service.DeployAsync(config, "password", entry => logs.Add(entry));
+        var result = await _service.DeployAsync(config, "password", commands, entry => logs.Add(entry));
 
         Assert.False(result.Success);
         Assert.Equal(-1, result.ExitCode);
@@ -43,7 +43,8 @@ public class DeploymentServiceTests
     [Fact]
     public async Task DeployAsync_SupportsCancellation()
     {
-        var config = CreateConfig("echo hello");
+        var config = CreateConfig();
+        var commands = new List<string> { "echo hello" };
         var cts = new CancellationTokenSource();
         cts.Cancel();
         var logs = new List<LogEntry>();
@@ -52,7 +53,7 @@ public class DeploymentServiceTests
         // throw OperationCanceledException or return a failed result (connection error before cancellation check)
         try
         {
-            var result = await _service.DeployAsync(config, "password", entry => logs.Add(entry), cts.Token);
+            var result = await _service.DeployAsync(config, "password", commands, entry => logs.Add(entry), cts.Token);
             // If no exception, the connection failed before cancellation was checked
             Assert.False(result.Success);
         }
@@ -65,10 +66,11 @@ public class DeploymentServiceTests
     [Fact]
     public async Task DeployAsync_LogsConnectionAttempt()
     {
-        var config = CreateConfig("echo hello");
+        var config = CreateConfig();
+        var commands = new List<string> { "echo hello" };
         var logs = new List<LogEntry>();
 
-        await _service.DeployAsync(config, "password", entry => logs.Add(entry));
+        await _service.DeployAsync(config, "password", commands, entry => logs.Add(entry));
 
         Assert.Contains(logs, l => l.Message.Contains("192.168.1.100:22"));
     }
@@ -83,6 +85,6 @@ public class DeploymentServiceTests
         Assert.Equal(string.Empty, config.Username);
         Assert.Equal(string.Empty, config.EncryptedPassword);
         Assert.Equal(string.Empty, config.WorkingDirectory);
-        Assert.Empty(config.Commands);
+        Assert.False(config.UseSudo);
     }
 }

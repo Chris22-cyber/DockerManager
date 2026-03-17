@@ -7,6 +7,7 @@ public interface IDeploymentService
     Task<DockerOperationResult> DeployAsync(
         DeploymentConfig config,
         string decryptedPassword,
+        List<string> commands,
         Action<LogEntry>? onLog = null,
         CancellationToken cancellationToken = default);
 

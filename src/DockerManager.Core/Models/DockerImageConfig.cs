@@ -10,4 +10,5 @@ public class DockerImageConfig
     public string Registry { get; set; } = string.Empty;
     public List<string> Tags { get; set; } = new() { "latest" };
     public Dictionary<string, string> BuildArgs { get; set; } = new();
+    public List<string> DeployCommands { get; set; } = new();
 }
